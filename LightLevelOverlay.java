@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
@@ -22,21 +23,15 @@ import net.minecraft.client.Minecraft;
  * This Minecraft mod renders the light level on top of blocks around the player,
  * this helps to identify areas where mobs can spawn.
  * 
- * This mod is developed with MCP 7.2, there is only one
- * method that needs to be invoked from within RenderGlobal.
- * Technically it needs to be invoked each frame within the rendering,
- * minecraft forge provides a hook at the end of each frame that
- * can be utilized for this: RenderWorldLastEvent.
- * In vanilla the only class file that needs to be modified is ava.class/RenderGlobal.java
+ * In vanilla this class is invoked in RenderGlobal at the end of drawBlockDamageTexture(),
+ * in forge the event hook RenderWorldLastEvent can be used.
  * 
  * place at end of RenderGlobal.drawBlockDamageTexture (func_72717_a in older mcp versions):
  *
  * 	LightLevelOverlay.instance.render(globalRenderBlocks, par1Tessellator, par2EntityPlayer, par3);
  *
- * This takes care of everything.
- * 
  * @author apoc <http://apoc.cc>
- * @version v0.7-mc1_3_2 [16.08.2012]
+ * @version v0.8-mc1_4_1 [24.10.2012]
  * @license 3-clause BSD
  */
 class LightLevelOverlay {
@@ -63,7 +58,7 @@ class LightLevelOverlay {
     private int generateInterval = 250;
     // overlay drawing area around the player in blocks in each direction
     private int drawDistance = 25; // actual area: drawDistance^3*2
-
+    
     private Minecraft mc;
 
     private File configFile;
@@ -145,7 +140,7 @@ class LightLevelOverlay {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.5F);
         GL11.glPushMatrix();
         GL11.glDisable(GL11.GL_ALPHA_TEST);
-        GL11.glPolygonOffset(-3F, -3F);
+        GL11.glPolygonOffset(-3.0F, -3.0F);
         GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
         GL11.glEnable(GL11.GL_ALPHA_TEST);
         tessellator.startDrawingQuads();
@@ -159,16 +154,19 @@ class LightLevelOverlay {
                 continue;
             }
             texture += (textureRow * 16);
-            
+
             // is snow above?
             if (entry.isSnowAbove()) {
-            	renderBlocks.renderTopFace(Block.snow, entry.x, entry.y + 1, entry.z, texture);
+            	renderTopFace(Block.snow, entry.x, entry.y + 1, entry.z, texture);
             }
             else {
-            	renderBlocks.renderTopFace(Block.stone, entry.x, entry.y, entry.z, texture);
+            	renderTopFace(Block.stone, entry.x, entry.y, entry.z, texture);
             }
             
-            //debugMessage("y-2 blockId = %d (spawnable: %s collidable: %s)\n", playerPosition.getBlockId(0, -1, 0), playerPosition.isSpawnable(0, -2, 0), playerPosition.isCollidable(0, -2, 0));
+            // debugMessage("y-2 blockId = %d (spawnable: %s collidable: %s)\n", 
+            //		playerPosition.getBlockId(0, -1, 0),
+            //		playerPosition.isSpawnable(0, -2, 0), 
+            // 		playerPosition.isCollidable(0, -2, 0));
         }
 
         tessellator.draw();
@@ -179,6 +177,54 @@ class LightLevelOverlay {
         GL11.glEnable(GL11.GL_ALPHA_TEST);
         GL11.glDepthMask(true);
         GL11.glPopMatrix();
+    }
+    
+    public void renderTopFace(Block block, double x, double y, double z, int texture)
+    {
+        Tessellator tessellator = Tessellator.instance;
+
+        // get bounding box data (is this time consuming?)
+    	double boundingBoxMinX = block.func_83009_v();
+    	double boundingBoxMaxX = block.func_83007_w();
+    	double boundingBoxMinY = block.func_83008_x();
+    	double boundingBoxMaxY = block.func_83010_y();
+    	double boundingBoxMinZ = block.func_83005_z();
+    	double boundingBoxMaxZ = block.func_83006_A();
+
+    	int var10 = (texture & 15) << 4;
+        int var11 = texture & 240;
+        double var12 = ((double)var10 + boundingBoxMinX * 16.0D) / 256.0D;
+        double var14 = ((double)var10 + boundingBoxMaxX * 16.0D - 0.01D) / 256.0D;
+        double var16 = ((double)var11 + boundingBoxMinZ * 16.0D) / 256.0D;
+        double var18 = ((double)var11 + boundingBoxMaxZ * 16.0D - 0.01D) / 256.0D;
+
+        if (boundingBoxMinX < 0.0D || boundingBoxMaxX > 1.0D)
+        {
+            var12 = (double)(((float)var10 + 0.0F) / 256.0F);
+            var14 = (double)(((float)var10 + 15.99F) / 256.0F);
+        }
+
+        if (boundingBoxMinZ < 0.0D || boundingBoxMaxZ > 1.0D)
+        {
+            var16 = (double)(((float)var11 + 0.0F) / 256.0F);
+            var18 = (double)(((float)var11 + 15.99F) / 256.0F);
+        }
+
+        double var20 = var14;
+        double var22 = var12;
+        double var24 = var16;
+        double var26 = var18;
+
+        double var28 = x + boundingBoxMinX;
+        double var30 = x + boundingBoxMaxX;
+        double var32 = y + boundingBoxMaxY;
+        double var34 = z + boundingBoxMinZ;
+        double var36 = z + boundingBoxMaxZ;
+
+        tessellator.addVertexWithUV(var30, var32, var36, var14, var18);
+        tessellator.addVertexWithUV(var30, var32, var34, var20, var24);
+        tessellator.addVertexWithUV(var28, var32, var34, var12, var16);
+        tessellator.addVertexWithUV(var28, var32, var36, var22, var26);
     }
 
     private void hotkeyPoll() {

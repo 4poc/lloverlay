@@ -50,18 +50,20 @@ class LightLevelOverlay {
     // the lightlevel.png texture file contains 
     private int textureRow = 0;
     // only draw overlay for lightlevel <n> and lower.
-    private int showLightlevelUpto = 14;
+    private int showLightlevelUpto = 15;
     // interval in ms in which the overlay cache should be generated,
     // for instance if you place a torch its at least 250 ms till the
     // overlays are updated
     private int generateInterval = 250;
     // overlay drawing area around the player in blocks in each direction
     private int drawDistance = 25; // actual area: drawDistance^3*2
+    
+    // show the lightlevel affected by the sun
+    private boolean useSkyLightlevel = false;
 
-    // only draw the overlay on blocks that allow mob spawning,
-    // if set to false, draws the overlay for blocks that ordinarily
+    // if set draws the overlay for blocks that ordinarily
     // don't allow mob spawning.
-    private boolean onlySpawnable = true;
+    private boolean drawNonSpawnable = false;
     
     private Minecraft mc;
 
@@ -89,8 +91,9 @@ class LightLevelOverlay {
         configProperties.setProperty("generateInterval", Integer.toString(generateInterval));
         configProperties.setProperty("textureRow", Integer.toString(textureRow));
         configProperties.setProperty("debug", Boolean.toString(debug));
-        configProperties.setProperty("onlySpawnable", Boolean.toString(onlySpawnable));
+        configProperties.setProperty("drawNonSpawnable", Boolean.toString(drawNonSpawnable));
         configProperties.setProperty("showLightlevelUpto", Integer.toString(showLightlevelUpto));
+        configProperties.setProperty("useSkyLightlevel", Boolean.toString(useSkyLightlevel));
         try {
             configProperties.store(new FileOutputStream(configFile), "Lightlevel Overlay Config");
             debugMessage("config saved: %s", configFile);
@@ -111,14 +114,20 @@ class LightLevelOverlay {
             textureRow = Integer.parseInt(configProperties.getProperty("textureRow"));
             debug = Boolean.parseBoolean(configProperties.getProperty("debug"));
             // for backwards-compat.:
-            if (configProperties.containsKey("onlySpawnable")) {
-                onlySpawnable = Boolean.parseBoolean(configProperties.getProperty("onlySpawnable"));
+            if (configProperties.containsKey("drawNonSpawnable")) {
+                drawNonSpawnable = Boolean.parseBoolean(configProperties.getProperty("drawNonSpawnable"));
             }
             else {
                 saveConfig();
             }
             if (configProperties.containsKey("showLightlevelUpto")) {
                 showLightlevelUpto = Integer.parseInt(configProperties.getProperty("showLightlevelUpto"));
+            }
+            else {
+                saveConfig();
+            }
+            if (configProperties.containsKey("useSkyLightlevel")) {
+                useSkyLightlevel = Boolean.parseBoolean(configProperties.getProperty("useSkyLightlevel"));
             }
             else {
                 saveConfig();
@@ -267,9 +276,15 @@ class LightLevelOverlay {
     private void hotkeyPoll() {
         if (Keyboard.isKeyDown(hotkey) && frameTime - lastHotkeyKeydown > 250) {
             lastHotkeyKeydown = frameTime;
-            active = (active) ? false : true; // toggle!
-            debugMessage("toggle active: %s", active);
-            cache.clear();
+            if (Keyboard.isKeyDown(Keyboard.KEY_R)) {
+                loadConfig();
+                debugMessage("reload config");
+            }
+            else {
+                active = (active) ? false : true; // toggle!
+                debugMessage("toggle active: %s", active);
+                cache.clear();
+            }
         }
     }
 
@@ -325,7 +340,7 @@ class LightLevelOverlay {
             
             // exception to the rule, draw the number on blocks where
             // mobs can't spawn
-            if (!onlySpawnable && (blockId == Block.tilledField.blockID ||
+            if (drawNonSpawnable && (blockId == Block.tilledField.blockID ||
                     blockId == Block.woodSingleSlab.blockID ||
                     blockId == Block.stoneSingleSlab.blockID ||
                     blockId == Block.glass.blockID)) {
@@ -345,7 +360,17 @@ class LightLevelOverlay {
 
         // light level of the (hopefully) airspace above it
         public int lightlevel() { // cache it maybe
-            return mc.theWorld.getSavedLightValue(EnumSkyBlock.Block, x, y + 1, z);
+            
+            // var53.getSavedLightValue(EnumSkyBlock.Block, var47 & 15, var22, var23 & 15) + 
+            // " sl: " + var53.getSavedLightValue(EnumSkyBlock.Sky, var47 & 15, var22, var23 & 15)
+            if (useSkyLightlevel) {
+                return mc.theWorld.getSavedLightValue(EnumSkyBlock.Sky, x, y + 1, z); 
+            }
+            else {
+                return mc.theWorld.getSavedLightValue(EnumSkyBlock.Block, x, y + 1, z);
+            }
+            
+            
         }
 
         // source: Effective Java

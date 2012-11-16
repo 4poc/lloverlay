@@ -1,4 +1,4 @@
-package net.minecraft.src;
+package cc.apoc.lloverlay;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,22 +16,20 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.src.Block;
+import net.minecraft.src.EntityPlayer;
+import net.minecraft.src.EnumSkyBlock;
+import net.minecraft.src.RenderBlocks;
+import net.minecraft.src.Tessellator;
 
 /**
  * Minecraft mod, renders light level on top of blocks.
  * 
  * This Minecraft mod renders the light level on top of blocks around the player,
  * this helps to identify areas where mobs can spawn.
- * 
- * In vanilla this class is invoked in RenderGlobal at the end of drawBlockDamageTexture(),
- * in forge the event hook RenderWorldLastEvent can be used.
- * 
- * place at end of RenderGlobal.drawBlockDamageTexture (func_72717_a in older mcp versions):
- *
- * 	LightLevelOverlay.instance.render(globalRenderBlocks, par1Tessellator, par2EntityPlayer, par3);
  *
  * @author apoc <http://apoc.cc>
- * @version v0.8-mc1_4_1 [24.10.2012]
+ * @version v0.9-mc1_4_4 [16.11.2012]
  * @license 3-clause BSD
  */
 class LightLevelOverlay {
@@ -51,18 +49,26 @@ class LightLevelOverlay {
     private long frameTime;
     // the lightlevel.png texture file contains 
     private int textureRow = 0;
-    private boolean showIlluminated = true;
+    // only draw overlay for lightlevel <n> and lower.
+    private int showLightlevelUpto = 14;
     // interval in ms in which the overlay cache should be generated,
     // for instance if you place a torch its at least 250 ms till the
     // overlays are updated
     private int generateInterval = 250;
     // overlay drawing area around the player in blocks in each direction
     private int drawDistance = 25; // actual area: drawDistance^3*2
+
+    // only draw the overlay on blocks that allow mob spawning,
+    // if set to false, draws the overlay for blocks that ordinarily
+    // don't allow mob spawning.
+    private boolean onlySpawnable = true;
     
     private Minecraft mc;
 
     private File configFile;
     private Properties configProperties;
+    
+    private RenderBlocks renderBlocks;
 
     private LightLevelOverlay() {
         debugMessage("loading");
@@ -83,7 +89,8 @@ class LightLevelOverlay {
         configProperties.setProperty("generateInterval", Integer.toString(generateInterval));
         configProperties.setProperty("textureRow", Integer.toString(textureRow));
         configProperties.setProperty("debug", Boolean.toString(debug));
-        configProperties.setProperty("showIlluminated", Boolean.toString(showIlluminated));
+        configProperties.setProperty("onlySpawnable", Boolean.toString(onlySpawnable));
+        configProperties.setProperty("showLightlevelUpto", Integer.toString(showLightlevelUpto));
         try {
             configProperties.store(new FileOutputStream(configFile), "Lightlevel Overlay Config");
             debugMessage("config saved: %s", configFile);
@@ -103,8 +110,15 @@ class LightLevelOverlay {
             generateInterval = Integer.parseInt(configProperties.getProperty("generateInterval"));
             textureRow = Integer.parseInt(configProperties.getProperty("textureRow"));
             debug = Boolean.parseBoolean(configProperties.getProperty("debug"));
-            if (configProperties.containsKey("showIlluminated")) {
-                showIlluminated = Boolean.parseBoolean(configProperties.getProperty("showIlluminated"));
+            // for backwards-compat.:
+            if (configProperties.containsKey("onlySpawnable")) {
+                onlySpawnable = Boolean.parseBoolean(configProperties.getProperty("onlySpawnable"));
+            }
+            else {
+                saveConfig();
+            }
+            if (configProperties.containsKey("showLightlevelUpto")) {
+                showLightlevelUpto = Integer.parseInt(configProperties.getProperty("showLightlevelUpto"));
             }
             else {
                 saveConfig();
@@ -122,6 +136,7 @@ class LightLevelOverlay {
         frameTime = System.currentTimeMillis();
         hotkeyPoll();
         if(!active) return;
+        this.renderBlocks = renderBlocks;
 
         double x = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double) partialTickTime;
         double y = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTickTime;
@@ -129,6 +144,9 @@ class LightLevelOverlay {
 
         Position playerPosition = new Position((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
 
+        //System.out.println(playerPosition.getBlockId(0, -2, 0));
+        
+        
         if (cache.size() == 0 || !playerPosition.equals(cachePosition)
                 || frameTime - lastGenerate > generateInterval) {
             generate(playerPosition);
@@ -150,7 +168,7 @@ class LightLevelOverlay {
         // render overlays
         for (Position entry : cache) {
             int texture = entry.lightlevel();
-            if (!showIlluminated && texture > 7) {
+            if (texture > showLightlevelUpto) {
                 continue;
             }
             texture += (textureRow * 16);
@@ -160,7 +178,9 @@ class LightLevelOverlay {
             	renderTopFace(Block.snow, entry.x, entry.y + 1, entry.z, texture);
             }
             else {
-            	renderTopFace(Block.stone, entry.x, entry.y, entry.z, texture);
+                Block block = Block.blocksList[entry.getBlockId(0, 0, 0)];
+                block = block == null ? Block.stone : block;
+            	renderTopFace(block, entry.x, entry.y, entry.z, texture);
             }
             
             // debugMessage("y-2 blockId = %d (spawnable: %s collidable: %s)\n", 
@@ -184,12 +204,29 @@ class LightLevelOverlay {
         Tessellator tessellator = Tessellator.instance;
 
         // get bounding box data (is this time consuming?)
-    	double boundingBoxMinX = block.func_83009_v();
-    	double boundingBoxMaxX = block.func_83007_w();
-    	double boundingBoxMinY = block.func_83008_x();
-    	double boundingBoxMaxY = block.func_83010_y();
-    	double boundingBoxMinZ = block.func_83005_z();
-    	double boundingBoxMaxZ = block.func_83006_A();
+    	double boundingBoxMinX = block.getBlockBoundsMinX();
+    	double boundingBoxMaxX = block.getBlockBoundsMaxX();
+    	double boundingBoxMinY = block.getBlockBoundsMinY();
+    	double boundingBoxMaxY = block.getBlockBoundsMaxY();
+    	double boundingBoxMinZ = block.getBlockBoundsMinZ();
+    	double boundingBoxMaxZ = block.getBlockBoundsMaxZ();
+    	
+    	// not really sure if this is a bug or not, but the
+    	// Y-bounds for half slabs are sometimes wrong, so we
+    	// set them manually here (1.4.4 and forge 6.3.0.378)
+    	if (block.blockID == Block.woodSingleSlab.blockID ||
+    	    block.blockID == Block.stoneSingleSlab.blockID) {
+    	    boolean upsidedown = (renderBlocks.blockAccess.getBlockMetadata(
+    	            (int)x, (int)y, (int)z) & 8) != 0;
+    	    if (upsidedown) {
+                boundingBoxMinY = 0.0;
+                boundingBoxMaxY = 1.0;
+    	    }
+    	    else {
+                boundingBoxMinY = 0.0;
+                boundingBoxMaxY = 0.5;
+    	    }
+    	}
 
     	int var10 = (texture & 15) << 4;
         int var11 = texture & 240;
@@ -217,7 +254,7 @@ class LightLevelOverlay {
 
         double var28 = x + boundingBoxMinX;
         double var30 = x + boundingBoxMaxX;
-        double var32 = y + boundingBoxMaxY;
+        double var32 = y + boundingBoxMaxY + 0.014;
         double var34 = z + boundingBoxMinZ;
         double var36 = z + boundingBoxMaxZ;
 
@@ -285,6 +322,15 @@ class LightLevelOverlay {
 
             if (blockId > 0 && block.isOpaqueCube())
                 return true;
+            
+            // exception to the rule, draw the number on blocks where
+            // mobs can't spawn
+            if (!onlySpawnable && (blockId == Block.tilledField.blockID ||
+                    blockId == Block.woodSingleSlab.blockID ||
+                    blockId == Block.stoneSingleSlab.blockID ||
+                    blockId == Block.glass.blockID)) {
+                return true;
+            }
             
             if (mc.theWorld.doesBlockHaveSolidTopSurface(x + dx, y + dy, z + dz)) {
                 return true;

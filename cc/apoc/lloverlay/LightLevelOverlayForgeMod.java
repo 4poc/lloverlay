@@ -1,10 +1,10 @@
 package cc.apoc.lloverlay;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.src.EntityPlayer;
-import net.minecraft.src.RenderBlocks;
-import net.minecraft.src.RenderGlobal;
-import net.minecraft.src.Tessellator;
+import net.minecraft.client.renderer.RenderBlocks;
+import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeSubscribe;

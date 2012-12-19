@@ -5,22 +5,20 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 
+import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderBlocks;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.EnumSkyBlock;
+
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.src.Block;
-import net.minecraft.src.EntityPlayer;
-import net.minecraft.src.EnumSkyBlock;
-import net.minecraft.src.RenderBlocks;
-import net.minecraft.src.Tessellator;
 
 /**
  * Minecraft mod, renders light level on top of blocks.
@@ -29,7 +27,7 @@ import net.minecraft.src.Tessellator;
  * this helps to identify areas where mobs can spawn.
  *
  * @author apoc <http://apoc.cc>
- * @version v0.9-mc1_4_4 [16.11.2012]
+ * @version v0.9-mc1_4_6 [19.12.2012]
  * @license 3-clause BSD
  */
 class LightLevelOverlay {

@@ -222,6 +222,7 @@
                 <exclude name="mcmod.info" />
             </fileset>
         </copy>
+        <move file="${vanilla_classes.dir}/assets/lloverlay" tofile="${vanilla_classes.dir}/assets/minecraft"/>
         
         <mkdir dir="${jar.dir}" />
 

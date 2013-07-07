@@ -28,7 +28,7 @@ public class LightLevelOverlayRenderer {
     
     public LightLevelOverlayRenderer() {
         cache = new ArrayList<BlockOverlay>();
-        textureLocation = new ResourceLocation("lloverlay:textures/lightlevel.png");
+        textureLocation = new ResourceLocation("textures/lightlevel.png");
     }
     
     public synchronized void clear() {

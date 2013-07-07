@@ -1,0 +1,12 @@
+diff -rupN src/net/minecraft/src/RenderGlobal.java src_mod/net/minecraft/src/RenderGlobal.java
+--- src/net/minecraft/src/RenderGlobal.java	2013-07-07 23:23:53.913078701 +0200
++++ src_mod/net/minecraft/src/RenderGlobal.java	2013-07-08 00:16:46.267986996 +0200
+@@ -1530,6 +1530,8 @@ public class RenderGlobal implements IWo
+         double var4 = par2EntityPlayer.lastTickPosX + (par2EntityPlayer.posX - par2EntityPlayer.lastTickPosX) * (double)par3;
+         double var6 = par2EntityPlayer.lastTickPosY + (par2EntityPlayer.posY - par2EntityPlayer.lastTickPosY) * (double)par3;
+         double var8 = par2EntityPlayer.lastTickPosZ + (par2EntityPlayer.posZ - par2EntityPlayer.lastTickPosZ) * (double)par3;
++        
++        LightLevelOverlay.getInstance().render(globalRenderBlocks, par3);
+ 
+         if (!this.damagedBlocks.isEmpty())
+         {

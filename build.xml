@@ -1,0 +1,303 @@
+<project name="lloverlay" default="main">
+    <property environment="env" />
+    <!-- Properties -->
+
+    <dirname property="imported.basedir" file="${ant.file.lloverlay}" />
+    <property name="build.dir" value="build" />
+    <property name="src.dir" value="${imported.basedir}" />
+
+    <property name="resources.dir" value="${imported.basedir}/resources" />
+
+    <property name="vanilla_src.dir" value="vanilla_src" />
+    <property name="forge_src.dir" value="forge_src" />
+
+    <property name="vanilla_diff.dir" value="vanilla_diff" />
+    <property name="vanilla_diff.filename" value="${vanilla_diff.dir}/src_minecraft.diff" />
+    <available property="diff-vanilla-exists" file="${vanilla_diff.filename}" />
+    <condition property="diff-vanilla-out-of-date">
+        <not>
+            <and>
+                <isset property="diff-vanilla-exists" />
+                <available file="${vanilla_diff.filename}" />
+            </and>
+        </not>
+    </condition>
+
+    <property name="vanilla_classes.dir" value="${build.dir}/vanilla_classes"/>
+    <property name="forge_classes.dir" value="${build.dir}/forge_classes"/>
+    <property name="jar.dir" value="packages"/>
+
+    <!-- used to download forge & mcp into -->
+    <property name="download.dir" value="download" />
+
+    <!-- used to copy assets from before forge setup -->
+    <property name="mc.assets" value="${user.home}/.minecraft/assets" />
+
+    <property name="mcp.dir" value="${build.dir}/mcp" />
+    <property name="mcp_src.dir" value="${mcp.dir}/src" />
+
+    <property name="forge.dir" value="${build.dir}/forge" />
+    <property name="forge_mcp.dir" value="${forge.dir}/mcp" />
+    <property name="forge_mcp_src.dir" value="${forge_mcp.dir}/src" />
+
+    <!-- setup versions -->
+    <property name="lloverlay.version" value="0.14" />
+    <property name="mc.version" value="1.6.1" />
+    <property name="mcp.version" value="803" />
+    <property name="forge.version" value="8.9.0.775" />
+
+    <property name="mcp.filename" value="mcp${mcp.version}.zip" />
+    <property name="forge.filename" value="minecraftforge-src-${mc.version}-${forge.version}.zip" />
+
+    <available property="mcp-exists" file="${download.dir}/${mcp.filename}" />
+    <available property="forge-exists" file="${download.dir}/${forge.filename}" />
+    <available property="mc-assets-exists" file="${mc.assets}" />
+
+    <condition property="mcp-out-of-date">
+        <not>
+            <and>
+                <isset property="mcp-exists" />
+                <available file="${mcp.dir}" />
+            </and>
+        </not>
+    </condition>
+    <condition property="forge-out-of-date">
+        <not>
+            <and>
+                <isset property="forge-exists" />
+                <available file="${forge_mcp_src.dir}" />
+            </and>
+        </not>
+    </condition>
+
+
+
+    <mkdir dir="${download.dir}" />
+
+
+    <!-- Clear build directory -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <!-- download mcp and forge -->
+    <target name="download-files" depends="download-forge,download-mcp" />
+    <target name="download-mcp" unless="mcp-exists">
+        <get src="http://mcp.ocean-labs.de/files/${mcp.filename}" dest="${download.dir}" usetimestamp="True" />
+    </target>
+    <target name="download-forge" unless="forge-exists">
+        <get src="http://files.minecraftforge.net/${forge.filename}" dest="${download.dir}" usetimestamp="True" />
+    </target>
+
+    <!-- setup mcp & forge -->
+    <target name="setup" depends="download-files,unzip-mcp,unzip-forge,copy-assets-forge,setup-mcp,setup-forge" />
+    <target name="unzip-mcp" if="mcp-out-of-date">
+        <delete dir="${mcp.dir}" failonerror="false" />
+        <mkdir dir="${mcp.dir}" />
+        <unzip dest="${mcp.dir}" src="${download.dir}/${mcp.filename}" />
+        <chmod dir="${mcp.dir}" perm="ugo+rx" includes="**.sh" />
+    </target>
+    <target name="unzip-forge" if="forge-out-of-date">
+        <delete dir="${forge.dir}" failonerror="false" />
+        <unzip dest="${forge.dir}/.." src="${download.dir}/${forge.filename}" />
+        <mkdir dir="${forge_mcp.dir}" />
+        <unzip dest="${forge_mcp.dir}" src="${download.dir}/${mcp.filename}" />
+        <chmod dir="${forge.dir}" perm="ugo+rx" includes="**.sh" />
+    </target>
+    <!-- copy jars/assets workaround -->
+    <target name="copy-assets-forge" if="mc-assets-exists">
+        <echo>copy assets: ${forge_mcp.dir}/jars/assets</echo>
+        <mkdir dir="${forge_mcp.dir}/jars/assets" />
+        <copy todir="${forge_mcp.dir}/jars/assets">
+            <fileset dir="${mc.assets}" />
+        </copy>
+    </target>
+    <target name="setup-mcp" depends="unzip-mcp" if="mcp-out-of-date">
+        <!-- install forge -->
+        <exec dir="${mcp.dir}" executable="sh" osfamily="unix" logError="true">
+            <arg value="decompile.sh"/>
+        </exec>
+    </target>
+    <target name="setup-forge" if="forge-out-of-date">
+        <!-- install forge -->
+        <exec dir="${forge.dir}" executable="sh" osfamily="unix" logError="true">
+            <arg value="install.sh"/>
+        </exec>
+    </target>
+
+    <!-- copies the mcp decompiled source to vanilla_diff/{src,src_mod}
+         clumsy hack to automate the process of creating the patch -->
+    <target name="diff-setup" if="diff-vanilla-out-of-date" depends="setup-mcp">
+        <delete dir="${vanilla_diff.dir}/src" failonerror="false" />
+        <delete dir="${vanilla_diff.dir}/src_mod" failonerror="false" />
+
+        <mkdir dir="${vanilla_diff.dir}/src" />
+        <copy todir="${vanilla_diff.dir}/src">
+            <fileset dir="${mcp.dir}/src/minecraft" />
+        </copy>
+        <copy todir="${vanilla_diff.dir}/src_mod">
+            <fileset dir="${vanilla_diff.dir}/src" />
+        </copy>
+    </target>
+
+    <target name="diff-create" if="diff-vanilla-out-of-date">
+        <exec dir="${vanilla_diff.dir}" executable="diff" osfamily="unix" logError="false"  failonerror="false" output="${vanilla_diff.filename}">
+            <arg line="-rupN src/ src_mod/"/>
+        </exec>
+    </target>
+
+    <!-- ****** vanilla ****** -->
+
+    <!-- removes all source files present in vanilla_src and mcp/src -->
+    <target name="vanilla-clean">
+        <delete verbose="true">
+            <fileset dir="${mcp_src.dir}/minecraft">
+                <present present="both" targetdir="${vanilla_src.dir}" />
+            </fileset>
+        </delete>
+        <!-- reverse vanilla diff -->
+        <exec dir="${mcp_src.dir}/minecraft" executable="bash" logError="false" failonerror="false">
+            <arg value="-c"/>
+            <arg value="patch -p1 -N -R &lt; ../../../../${vanilla_diff.filename}"/>
+        </exec>
+        <!-- cleanup reobf directory -->
+        <delete verbose="true">
+            <fileset dir="${mcp.dir}/reobf" />
+        </delete>
+    </target>
+
+    <target name="vanilla-copy-src" depends="vanilla-clean">
+        <!-- copy sources -->
+        <copy todir="${mcp_src.dir}/minecraft" verbose="true">
+            <fileset dir="${vanilla_src.dir}" />
+            <filterset>
+                <filter token="VERSION" value="${lloverlay.version}" />
+            </filterset>
+        </copy>
+        <echo>apply vanilla patches</echo>
+        <exec dir="${mcp_src.dir}/minecraft" executable="bash" logError="true" failonerror="true">
+            <arg value="-c"/>
+            <arg value="patch -p1 &lt; ../../../../${vanilla_diff.filename}"/>
+        </exec>
+    </target>
+
+
+    <target name="vanilla-compile" depends="setup,vanilla-copy-src">
+        <!-- recompile -->
+        <exec dir="${mcp.dir}" executable="sh" osfamily="unix">
+            <arg value="recompile.sh" />
+        </exec>
+
+        <!-- check for failure -->
+        <fail message="MCP failed to build">
+            <condition>
+                <resourcecontains resource="${mcp.dir}/logs/client_compile.log" substring="error:" />
+            </condition>
+        </fail>
+    </target>
+
+    <target name="vanilla-reobf" depends="vanilla-compile">
+        <!-- reobfuscate -->
+        <exec dir="${mcp.dir}" executable="sh" osfamily="unix">
+            <arg value="reobfuscate.sh" />
+        </exec>
+    </target>
+
+    <!-- create vanilla package -->
+    <target name="vanilla-package" depends="vanilla-reobf">
+        <mkdir dir="${vanilla_classes.dir}" />
+
+        <delete includeemptydirs="true">
+            <fileset dir="${vanilla_classes.dir}" includes="**/*" />
+        </delete>
+
+        <!-- copy classes -->
+        <copy todir="${vanilla_classes.dir}">
+            <fileset dir="${mcp.dir}/reobf/minecraft" />
+        </copy>
+
+        <!-- copy resources -->
+        <copy todir="${vanilla_classes.dir}">
+            <fileset dir="${resources.dir}">
+                <exclude name="mcmod.info" />
+            </fileset>
+        </copy>
+        
+        <mkdir dir="${jar.dir}" />
+
+        <jar destfile="${jar.dir}/lloverlay-v${lloverlay.version}-${mc.version}-mcp${mcp.version}-vanilla.zip" basedir="${vanilla_classes.dir}" />
+    </target>
+
+    <!-- ****** forge ****** -->
+
+    <target name="forge-clean">
+        <delete verbose="true">
+            <fileset dir="${forge_mcp_src.dir}/minecraft">
+                <present present="both" targetdir="${forge_src.dir}" />
+            </fileset>
+        </delete>
+        <!-- cleanup reobf directory -->
+        <delete verbose="true">
+            <fileset dir="${forge_mcp.dir}/reobf" />
+        </delete>
+    </target>
+
+    <target name="forge-copy-src" depends="forge-clean">
+        <!-- copy sources -->
+        <copy todir="${forge_mcp_src.dir}/minecraft" verbose="true">
+            <fileset dir="${forge_src.dir}" />
+            <filterset>
+                <filter token="VERSION" value="${lloverlay.version}" />
+            </filterset>
+        </copy>
+    </target>
+    
+    <target name="forge-compile" depends="setup,forge-copy-src">
+        <!-- recompile -->
+        <exec dir="${forge_mcp.dir}" executable="sh" osfamily="unix">
+            <arg value="recompile.sh" />
+        </exec>
+
+        <!-- check for failure -->
+        <fail message="MCP failed to build">
+            <condition>
+                <resourcecontains resource="${forge_mcp.dir}/logs/client_compile.log" substring="error:" />
+            </condition>
+        </fail>
+    </target>
+    
+    <target name="forge-reobf" depends="forge-compile">
+        <!-- reobfuscate -->
+        <exec dir="${forge_mcp.dir}" executable="sh" osfamily="unix">
+            <arg value="reobfuscate_srg.sh" />
+        </exec>
+    </target>
+
+    <!-- create forge package -->
+    <target name="forge-package" depends="forge-reobf">
+        <mkdir dir="${forge_classes.dir}" />
+
+        <delete includeemptydirs="true">
+            <fileset dir="${forge_classes.dir}" includes="**/*" />
+        </delete>
+
+        <!-- copy classes -->
+        <copy todir="${forge_classes.dir}">
+            <fileset dir="${forge_mcp.dir}/reobf/minecraft" />
+        </copy>
+
+        <!-- copy resources -->
+        <copy todir="${forge_classes.dir}">
+            <fileset dir="${resources.dir}" />
+            <filterset>
+                <filter token="VERSION" value="${lloverlay.version}" />
+            </filterset>
+        </copy>
+        
+        <mkdir dir="${jar.dir}" />
+
+        <jar destfile="${jar.dir}/lloverlay-v${lloverlay.version}-${mc.version}-${forge.version}-forge.zip" basedir="${forge_classes.dir}" />
+    </target>
+    
+    <target name="main" depends="vanilla-package,forge-package" />
+</project>

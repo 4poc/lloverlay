@@ -3,8 +3,8 @@
   "modid": "lloverlay",
   "name": "Light Level Overlay",
   "description": "Draws the light level on-top of blocks.",
-  "version": "v0.9",
-  "mcversion": "1.4.4",
+  "version": "@VERSION@",
+  "mcversion": "",
   "url": "http://www.minecraftforum.net/topic/1399304-light-level-overlay/",
   "updateUrl": "",
   "authors": [

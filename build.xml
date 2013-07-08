@@ -41,10 +41,10 @@
     <property name="forge_mcp_src.dir" value="${forge_mcp.dir}/src" />
 
     <!-- setup versions -->
-    <property name="lloverlay.version" value="0.14" />
-    <property name="mc.version" value="1.6.1" />
-    <property name="mcp.version" value="803" />
-    <property name="forge.version" value="8.9.0.775" />
+    <property name="lloverlay.version" value="0.15" />
+    <property name="mc.version" value="1.6.2" />
+    <property name="mcp.version" value="804" />
+    <property name="forge.version" value="9.10.0.776" />
 
     <property name="mcp.filename" value="mcp${mcp.version}.zip" />
     <property name="forge.filename" value="minecraftforge-src-${mc.version}-${forge.version}.zip" />
@@ -290,6 +290,8 @@
         <!-- copy resources -->
         <copy todir="${forge_classes.dir}">
             <fileset dir="${resources.dir}" />
+        </copy>
+        <copy file="${forge_classes.dir}/mcmod.info" toFile="${forge_classes.dir}/mcmod.info">
             <filterset>
                 <filter token="VERSION" value="${lloverlay.version}" />
             </filterset>

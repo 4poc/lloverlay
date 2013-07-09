@@ -226,6 +226,7 @@ class LightLevelOverlay {
                     catch (Exception e) {
                         debugMessage("unable to start lloverlay thread!");
                         e.printStackTrace();
+                        thread = new GenerateThread();
                     }
                 }
             }
@@ -449,7 +450,7 @@ class LightLevelOverlay {
                         for (int z = 0; z < 16; z++) {
                             Block previous = null;
                             // begin iteration above the players head (small optimization)
-                            for (int y = posY+3; y > posY+3-drawDistance; y--) {
+                            for (int y = posY+3; y > posY+3-drawDistance && y > 0; y--) {
                                 
                                 // local chunk coords => world coords
                                 int wx = chunkX * 16 + x;

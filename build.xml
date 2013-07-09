@@ -41,7 +41,7 @@
     <property name="forge_mcp_src.dir" value="${forge_mcp.dir}/src" />
 
     <!-- setup versions -->
-    <property name="lloverlay.version" value="0.15" />
+    <property name="lloverlay.version" value="0.16" />
     <property name="mc.version" value="1.6.2" />
     <property name="mcp.version" value="804" />
     <property name="forge.version" value="9.10.0.776" />

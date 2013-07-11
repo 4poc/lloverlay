@@ -1,5 +1,10 @@
 <project name="lloverlay" default="main">
     <property environment="env" />
+
+    <condition property="build_number" value="-${env.BUILD_NUMBER}" else="">
+        <isset property="env.BUILD_NUMBER" />
+    </condition>
+    
     <!-- Properties -->
 
     <dirname property="imported.basedir" file="${ant.file.lloverlay}" />
@@ -41,10 +46,10 @@
     <property name="forge_mcp_src.dir" value="${forge_mcp.dir}/src" />
 
     <!-- setup versions -->
-    <property name="lloverlay.version" value="0.17" />
+    <property name="lloverlay.version" value="0.18" />
     <property name="mc.version" value="1.6.2" />
     <property name="mcp.version" value="804" />
-    <property name="forge.version" value="9.10.0.776" />
+    <property name="forge.version" value="9.10.0.789" />
 
     <property name="mcp.filename" value="mcp${mcp.version}.zip" />
     <property name="forge.filename" value="minecraftforge-src-${mc.version}-${forge.version}.zip" />
@@ -171,7 +176,7 @@
         <copy todir="${mcp_src.dir}/minecraft" verbose="true">
             <fileset dir="${vanilla_src.dir}" />
             <filterset>
-                <filter token="VERSION" value="${lloverlay.version}" />
+                <filter token="VERSION" value="${lloverlay.version}${build_number}" />
             </filterset>
         </copy>
         <echo>apply vanilla patches</echo>
@@ -226,7 +231,7 @@
         
         <mkdir dir="${jar.dir}" />
 
-        <jar destfile="${jar.dir}/lloverlay-v${lloverlay.version}-${mc.version}-mcp${mcp.version}-vanilla.zip" basedir="${vanilla_classes.dir}" />
+        <jar destfile="${jar.dir}/lloverlay-v${lloverlay.version}${build_number}-${mc.version}-mcp${mcp.version}-vanilla.zip" basedir="${vanilla_classes.dir}" />
     </target>
 
     <!-- ****** forge ****** -->
@@ -248,7 +253,7 @@
         <copy todir="${forge_mcp_src.dir}/minecraft" verbose="true">
             <fileset dir="${forge_src.dir}" />
             <filterset>
-                <filter token="VERSION" value="${lloverlay.version}" />
+                <filter token="VERSION" value="${lloverlay.version}${build_number}" />
             </filterset>
         </copy>
     </target>
@@ -293,13 +298,13 @@
         </copy>
         <copy file="${forge_classes.dir}/mcmod.info" toFile="${forge_classes.dir}/mcmod.info">
             <filterset>
-                <filter token="VERSION" value="${lloverlay.version}" />
+                <filter token="VERSION" value="${lloverlay.version}${build_number}" />
             </filterset>
         </copy>
         
         <mkdir dir="${jar.dir}" />
 
-        <jar destfile="${jar.dir}/lloverlay-v${lloverlay.version}-${mc.version}-${forge.version}-forge.zip" basedir="${forge_classes.dir}" />
+        <jar destfile="${jar.dir}/lloverlay-v${lloverlay.version}${build_number}-${mc.version}-${forge.version}-forge.zip" basedir="${forge_classes.dir}" />
     </target>
     
     <target name="main" depends="vanilla-package,forge-package" />

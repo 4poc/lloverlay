@@ -229,6 +229,9 @@
         </copy>
         <move file="${vanilla_classes.dir}/assets/lloverlay" tofile="${vanilla_classes.dir}/assets/minecraft"/>
         
+        <delete includeemptydirs="true">
+            <fileset dir="${jar.dir}" includes="**/*" />
+        </delete>
         <mkdir dir="${jar.dir}" />
 
         <jar destfile="${jar.dir}/lloverlay-v${lloverlay.version}${build_number}-${mc.version}-mcp${mcp.version}-vanilla.zip" basedir="${vanilla_classes.dir}" />

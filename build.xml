@@ -296,14 +296,17 @@
         </copy>
 
         <!-- copy resources -->
-        <copy todir="${forge_classes.dir}">
-            <fileset dir="${resources.dir}" />
-        </copy>
-        <copy file="${forge_classes.dir}/mcmod.info" toFile="${forge_classes.dir}/mcmod.info">
+        <copy file="${resources.dir}/mcmod.info" toFile="${forge_classes.dir}/mcmod.info">
             <filterset>
                 <filter token="VERSION" value="${lloverlay.version}${build_number}" />
             </filterset>
         </copy>
+        <copy todir="${forge_classes.dir}">
+            <fileset dir="${resources.dir}">
+                <exclude name="mcmod.info" />
+            </fileset>
+        </copy>
+
         
         <mkdir dir="${jar.dir}" />
 

@@ -1,11 +1,10 @@
-package cc.apoc.lloverlay;
+package net.minecraft.src;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Date;
 import java.util.Properties;
 
 import org.lwjgl.input.Keyboard;
@@ -41,6 +40,14 @@ public class LightLevelOverlayConfig {
     // show the lightlevel affected by the sun
     private boolean useSkyLightlevel = false;
     
+    // what renderer to use (slow 'vanilla', or 'fast') auto=autodetect
+    public enum Renderer {
+        AUTO,
+        VANILLA,
+        FAST
+    }
+    private Renderer renderer = Renderer.AUTO;
+    
     public LightLevelOverlayConfig(File file) {
         this.file = file;
         if (!file.getParentFile().exists()) {
@@ -62,6 +69,7 @@ public class LightLevelOverlayConfig {
         properties.setProperty("debug", Boolean.toString(debug));
         properties.setProperty("showLightlevelUpto", Integer.toString(showLightlevelUpto));
         properties.setProperty("useSkyLightlevel", Boolean.toString(useSkyLightlevel));
+        properties.setProperty("renderer", getRendererString());
         try {
             properties.store(new FileOutputStream(file), "Lightlevel Overlay Config");
             debugMessage("config saved: %s", file);
@@ -69,6 +77,18 @@ public class LightLevelOverlayConfig {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private String getRendererString() {
+        switch (renderer) {
+        case FAST:
+            return "fast";
+        case VANILLA:
+            return "vanilla";
+        case AUTO:
+        default:
+            return "auto";
         }
     }
 
@@ -90,6 +110,18 @@ public class LightLevelOverlayConfig {
             }
             if (properties.containsKey("useSkyLightlevel")) {
                 useSkyLightlevel = Boolean.parseBoolean(properties.getProperty("useSkyLightlevel"));
+            }
+            else {
+                save();
+            }
+            if (properties.containsKey("renderer")) {
+                String r = properties.getProperty("renderer");
+                if (r.equals("vanilla"))
+                    renderer = Renderer.VANILLA;
+                else if (r.equals("fast"))
+                    renderer = Renderer.FAST;
+                else
+                    renderer = Renderer.AUTO;
             }
             else {
                 save();
@@ -163,6 +195,14 @@ public class LightLevelOverlayConfig {
 
     public void setUseSkyLightlevel(boolean useSkyLightlevel) {
         this.useSkyLightlevel = useSkyLightlevel;
+    }
+
+    public Renderer getRenderer() {
+        return renderer;
+    }
+
+    public void setRenderer(Renderer renderer) {
+        this.renderer = renderer;
     }
 }
 

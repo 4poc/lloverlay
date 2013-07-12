@@ -1,26 +1,13 @@
 package cc.apoc.lloverlay;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Date;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Properties;
-import java.util.Set;
 
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.world.EnumSkyBlock;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.IChunkProvider;
 
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.GLContext;
 
 /**
  * LightLevelOverlay Minecraft mod.
@@ -72,9 +59,7 @@ class LightLevelOverlay {
         config = new LightLevelOverlayConfig(file);
         
         debugMessage("loading");
-        
-        renderer = new LightLevelOverlayRenderer();
-        thread = new LightLevelOverlayThread(config, renderer);
+        reload();
     }
 
 
@@ -93,6 +78,20 @@ class LightLevelOverlay {
 
         renderer.render(x, y, z);
     }
+    
+    private void reload() {
+        if ((config.getRenderer() == LightLevelOverlayConfig.Renderer.FAST ||
+            config.getRenderer() == LightLevelOverlayConfig.Renderer.AUTO) &&
+           GLContext.getCapabilities().OpenGL15) {
+           renderer = new LightLevelOverlayRendererVBO(config);
+           debugMessage("using fast VBO renderer");
+        }
+        else {
+            renderer = new LightLevelOverlayRendererVanilla(config);
+            debugMessage("using slow vanilla legacy renderer");
+        }
+        thread = new LightLevelOverlayThread(config, renderer);
+    }
 
     private void hotkeyPoll() {
         if (Keyboard.isKeyDown(config.getHotkey()) && frameTime - lastHotkeyKeydown > 250) {
@@ -100,7 +99,9 @@ class LightLevelOverlay {
             if (Keyboard.isKeyDown(Keyboard.KEY_R)) {
                 config.load();
                 debugMessage("reload config");
-                renderer.clear();
+                thread.setActive(false);
+                thread.interrupt();
+                reload();
             }
             else {
                 active = (active) ? false : true; // toggle!

@@ -1,7 +1,5 @@
 package cc.apoc.lloverlay;
 
-import java.util.Date;
-
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderBlocks;
@@ -95,10 +93,8 @@ public class LightLevelOverlayThread extends Thread {
         renderer.startGenerate();
 
         long tStart = System.currentTimeMillis();
-        
-        int posX = (int) Math.floor(mc.thePlayer.posX);
+
         int playerY = (int) Math.floor(mc.thePlayer.posY);
-        int posZ = (int) Math.floor(mc.thePlayer.posZ);
         
         int playerChunkX = mc.thePlayer.chunkCoordX;
         int playerChunkZ = mc.thePlayer.chunkCoordZ;

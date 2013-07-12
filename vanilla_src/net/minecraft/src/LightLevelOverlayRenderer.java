@@ -1,4 +1,4 @@
-package net.minecraft.src;
+package cc.apoc.lloverlay;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -124,7 +124,7 @@ public class LightLevelOverlayRenderer {
         double zmin = overlay.z + boxMinZ;
         double zmax = overlay.z + boxMaxZ;
 
-        // add plane coordinates
+        // add plane vertices
         tessellator.addVertexWithUV(xmax, y, zmax, umax, vmax);
         tessellator.addVertexWithUV(xmax, y, zmin, umax, vmin);
         tessellator.addVertexWithUV(xmin, y, zmin, umin, vmin);

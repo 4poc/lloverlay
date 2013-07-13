@@ -177,7 +177,9 @@
     <target name="vanilla-copy-src" depends="vanilla-clean">
         <mkdir dir="${vanilla_src.dir}/net/minecraft/src" />
         <copy todir="${vanilla_src.dir}/net/minecraft/src" verbose="true">
-            <fileset dir="${forge_src.dir}/cc/apoc/lloverlay/" />
+            <fileset dir="${forge_src.dir}/cc/apoc/lloverlay/">
+                <exclude name="LightLevelOverlayForgeMod.java" />
+            </fileset>
         </copy>
         
         <replaceregexp byline="true">

@@ -134,6 +134,16 @@ public class LightLevelOverlayConfig {
         }   
     }
     
+    protected boolean isForge() {
+        try {
+            Class.forName ("net.minecraftforge.client.MinecraftForgeClient");
+            return true;
+        }
+        catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+    
     private void debugMessage(String fmt, Object... args) {
         if (debug) {
             String message = String.format(fmt, args);

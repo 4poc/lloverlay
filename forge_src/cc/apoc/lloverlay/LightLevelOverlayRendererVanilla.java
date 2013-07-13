@@ -35,7 +35,9 @@ public class LightLevelOverlayRendererVanilla implements LightLevelOverlayRender
     public LightLevelOverlayRendererVanilla(LightLevelOverlayConfig config) {
         this.config = config;
         cache = new LinkedList<BlockOverlay>();
-        textureLocation = new ResourceLocation("lloverlay:textures/lightlevel.png");
+        String domain = "minecraft";
+        if (config.isForge()) domain = "lloverlay";
+        textureLocation = new ResourceLocation(domain + ":textures/lightlevel.png");
     }
     
     public synchronized void clear() {

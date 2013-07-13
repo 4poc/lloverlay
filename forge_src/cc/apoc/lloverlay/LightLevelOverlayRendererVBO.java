@@ -3,6 +3,8 @@ package cc.apoc.lloverlay;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
@@ -16,17 +18,14 @@ public class LightLevelOverlayRendererVBO implements LightLevelOverlayRenderer {
     
     private LightLevelOverlayConfig config;
     
-    int vertexId = 0;
-    int texcoordId = 0;
+    int vertexBufferId = 0;
+    int indexBufferId = 0;
     
+    // stores interleaved vertex + texture coords
     private FloatBuffer vertexBuffer;
-    private FloatBuffer texcoordBuffer;
-    
     private float[] vertexArray;
-    private float[] texcoordArray;
     
     private int vertexArrayIndex = 0;
-    private int texcoordArrayIndex = 0;
     
     private int vertices = 0;
     
@@ -35,22 +34,23 @@ public class LightLevelOverlayRendererVBO implements LightLevelOverlayRenderer {
     public LightLevelOverlayRendererVBO(LightLevelOverlayConfig config) {
         this.config = config;
         
-        textureLocation = new ResourceLocation("lloverlay:textures/lightlevel.png");
+        String domain = "minecraft";
+        if (config.isForge()) domain = "lloverlay";
+        textureLocation = new ResourceLocation(domain + ":textures/lightlevel.png");
         
         // init buffers used for the vbo
-        vertexBuffer = createBuffer(((int) Math.pow(config.getDrawDistance() * 2, 3) + 1) * 3);
-        texcoordBuffer = createBuffer(((int) Math.pow(config.getDrawDistance() * 2, 3) + 1) * 2);
+        int maxVertices = ((int) Math.pow(config.getDrawDistance() * 2, 3) + 1);
+        int maxTexCoords = ((int) Math.pow(config.getDrawDistance() * 2, 3) + 1);
+        int maxFloats = maxVertices * 3 + maxTexCoords * 2;
         
-        vertexArray = new float[vertexBuffer.capacity()];
-        texcoordArray = new float[texcoordBuffer.capacity()];
+        vertexBuffer = createFloatBuffer(maxFloats);
+        vertexArray = new float[maxFloats];
         
-        vertexId = GL15.glGenBuffers();
-        texcoordId = GL15.glGenBuffers();
+        vertexBufferId = GL15.glGenBuffers();
     }
         
     public synchronized void clear() {
         vertexArrayIndex = 0;
-        texcoordArrayIndex = 0;
     }
     
     public synchronized void addOverlay(int x, int y, int z, double blockHeight, int tex) {
@@ -76,30 +76,28 @@ public class LightLevelOverlayRendererVBO implements LightLevelOverlayRenderer {
         float zmax = (float) (z + boxMaxZ);
 
         // add plane vertices
-        addVertex(xmax, ycoord, zmax);
-        addTexUV(umax, vmax);
-        addVertex(xmax, ycoord, zmin);
-        addTexUV(umax, vmin);
-        addVertex(xmin, ycoord, zmin);
-        addTexUV(umin, vmin);
-
-        addVertex(xmax, ycoord, zmax);
-        addTexUV(umax, vmax);
-        addVertex(xmin, ycoord, zmin);
-        addTexUV(umin, vmin);
-        addVertex(xmin, ycoord, zmax);
-        addTexUV(umin, vmax);
+        addVertex(xmax, ycoord, zmax, umax, vmax);
+        addVertex(xmax, ycoord, zmin, umax, vmin);
+        addVertex(xmin, ycoord, zmin, umin, vmin);
+        addVertex(xmax, ycoord, zmax, umax, vmax);
+        addVertex(xmin, ycoord, zmin, umin, vmin);
+        addVertex(xmin, ycoord, zmax, umin, vmax);
     }
     
-    private void addVertex(float x, float y, float z) {
+    private void addVertex(float x, float y, float z, float u, float v) {
         vertexArray[vertexArrayIndex++] = x;
         vertexArray[vertexArrayIndex++] = y;
         vertexArray[vertexArrayIndex++] = z;
+        vertexArray[vertexArrayIndex++] = u;
+        vertexArray[vertexArrayIndex++] = v;
     }
-    
-    private void addTexUV(float u, float v) {
-        texcoordArray[texcoordArrayIndex++] = u;
-        texcoordArray[texcoordArrayIndex++] = v;
+
+    private int floatHashCode(Float... floats) {
+        final int prime = 31;
+        int result = 1;
+        for (Float f : floats)
+            result = prime * result + Float.floatToIntBits(f);
+        return result;
     }
     
     public void startGenerate() {
@@ -111,12 +109,9 @@ public class LightLevelOverlayRendererVBO implements LightLevelOverlayRenderer {
         vertexBuffer.limit(vertexArrayIndex);
         vertexBuffer.put(vertexArray, 0, vertexArrayIndex);
         vertexBuffer.position(0);
+
+        vertices = vertexArrayIndex / (3+2);
         
-        texcoordBuffer.limit(texcoordArrayIndex);
-        texcoordBuffer.put(texcoordArray, 0, texcoordArrayIndex);
-        texcoordBuffer.position(0);
-        
-        vertices = vertexArrayIndex;
         needUpload = true;
     }
     
@@ -124,14 +119,9 @@ public class LightLevelOverlayRendererVBO implements LightLevelOverlayRenderer {
         debugMessage("upload VBO");
         long tStart = System.currentTimeMillis();
         
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vertexId);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vertexBufferId);
         GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vertexArrayIndex, GL15.GL_STATIC_DRAW);
         GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vertexBuffer, GL15.GL_STATIC_DRAW);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-        
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, texcoordId);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, texcoordArrayIndex, GL15.GL_STATIC_DRAW);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, texcoordBuffer, GL15.GL_STATIC_DRAW);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         
         needUpload = false;
@@ -143,17 +133,16 @@ public class LightLevelOverlayRendererVBO implements LightLevelOverlayRenderer {
         GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
         GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
         
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vertexId);
-        GL11.glVertexPointer(3, GL11.GL_FLOAT, 0, 0);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vertexBufferId);
         
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, texcoordId);
-        GL11.glTexCoordPointer(2, GL11.GL_FLOAT, 0, 0);
+        GL11.glVertexPointer(3, GL11.GL_FLOAT, 20, 0); // 20 stride(uvxyz 5*4)
+        GL11.glTexCoordPointer(2, GL11.GL_FLOAT, 20, 12); // 20 stride(uvxyz 5*4), 12 offset(xyz 3*4), uvxyz
 
-        //System.out.println(vertices);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, vertices);
-        
+
         // disable the VBO
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     
     public int getCacheSize() {
@@ -200,7 +189,7 @@ public class LightLevelOverlayRendererVBO implements LightLevelOverlayRenderer {
         GL11.glPopMatrix();
     }
     
-    private FloatBuffer createBuffer(int size) {
+    private FloatBuffer createFloatBuffer(int size) {
         ByteBuffer vbb = ByteBuffer.allocateDirect(size * 4); 
         vbb.order(ByteOrder.nativeOrder());
         FloatBuffer fb = vbb.asFloatBuffer();

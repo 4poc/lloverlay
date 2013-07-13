@@ -2,6 +2,7 @@ build/
 bin/
 packages/
 download
+vanilla_src/
 vanilla_diff/src
 vanilla_diff/src_mod
 *.class

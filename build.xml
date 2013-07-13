@@ -155,6 +155,9 @@
 
     <!-- removes all source files present in vanilla_src and mcp/src -->
     <target name="vanilla-clean">
+        <delete>
+            <fileset dir="${vanilla_src.dir}" />
+        </delete>
         <delete verbose="true">
             <fileset dir="${mcp_src.dir}/minecraft">
                 <present present="both" targetdir="${vanilla_src.dir}" />
@@ -172,6 +175,26 @@
     </target>
 
     <target name="vanilla-copy-src" depends="vanilla-clean">
+        <mkdir dir="${vanilla_src.dir}/net/minecraft/src" />
+        <copy todir="${vanilla_src.dir}/net/minecraft/src" verbose="true">
+            <fileset dir="${forge_src.dir}/cc/apoc/lloverlay/" />
+        </copy>
+        
+        <replaceregexp byline="true">
+          <regexp pattern="package cc.apoc.lloverlay;"/>
+          <substitution expression="package net.minecraft.src;"/>
+          <fileset dir="${vanilla_src.dir}">
+            <include name="**/*"/>
+          </fileset>
+        </replaceregexp>
+        <replaceregexp byline="true">
+          <regexp pattern="import net.minecraft.*;"/>
+          <substitution expression=""/>
+          <fileset dir="${vanilla_src.dir}">
+            <include name="**/*"/>
+          </fileset>
+        </replaceregexp>
+        
         <!-- copy sources -->
         <copy todir="${mcp_src.dir}/minecraft" verbose="true">
             <fileset dir="${vanilla_src.dir}" />

@@ -155,7 +155,7 @@
 
     <!-- removes all source files present in vanilla_src and mcp/src -->
     <target name="vanilla-clean">
-        <delete>
+        <delete failonerror="false">
             <fileset dir="${vanilla_src.dir}" />
         </delete>
         <delete verbose="true">

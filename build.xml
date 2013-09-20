@@ -46,10 +46,10 @@
     <property name="forge_mcp_src.dir" value="${forge_mcp.dir}/src" />
 
     <!-- setup versions -->
-    <property name="lloverlay.version" value="0.19" />
-    <property name="mc.version" value="1.6.2" />
-    <property name="mcp.version" value="804" />
-    <property name="forge.version" value="9.10.0.789" />
+    <property name="lloverlay.version" value="0.20" />
+    <property name="mc.version" value="1.6.4" />
+    <property name="mcp.version" value="811" />
+    <property name="forge.version" value="9.11.0.878" />
 
     <property name="mcp.filename" value="mcp${mcp.version}.zip" />
     <property name="forge.filename" value="minecraftforge-src-${mc.version}-${forge.version}.zip" />

@@ -31,7 +31,7 @@ public class LightLevelOverlayThread extends Thread {
         Block.pressurePlateIron.blockID,
         Block.daylightSensor.blockID,
         Block.leaves.blockID,
-        Block.field_111031_cC.blockID // carpet
+        Block.carpet.blockID // carpet
     };
     
     

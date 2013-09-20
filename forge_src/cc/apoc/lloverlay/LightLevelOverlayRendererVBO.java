@@ -166,7 +166,7 @@ public class LightLevelOverlayRendererVBO implements LightLevelOverlayRenderer {
         if (vertices == 0) return;
         
         GL11.glBlendFunc(GL11.GL_DST_COLOR, GL11.GL_SRC_COLOR);
-        Minecraft.getMinecraft().func_110434_K().func_110577_a(textureLocation);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(textureLocation);
         
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.5F);
         GL11.glPushMatrix();

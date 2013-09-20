@@ -79,7 +79,7 @@ class LightLevelOverlay {
         renderer.render(x, y, z);
     }
     
-    private void reload() {
+    protected void reload() {
         if ((config.getRenderer() == LightLevelOverlayConfig.Renderer.FAST ||
             config.getRenderer() == LightLevelOverlayConfig.Renderer.AUTO) &&
            GLContext.getCapabilities().OpenGL15) {
@@ -102,6 +102,9 @@ class LightLevelOverlay {
                 thread.setActive(false);
                 thread.interrupt();
                 reload();
+            }
+            if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+                mc.displayGuiScreen(new LightLevelOverlayScreen(config));
             }
             else {
                 active = (active) ? false : true; // toggle!

@@ -79,6 +79,7 @@ public class LightLevelOverlayRendererVanilla implements LightLevelOverlayRender
         GL11.glPolygonOffset(-3.0F, -3.0F);
         GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
         GL11.glEnable(GL11.GL_ALPHA_TEST);
+        boolean glBlendState = GL11.glIsEnabled(GL11.GL_BLEND);
         GL11.glEnable(GL11.GL_BLEND);
         Tessellator tessellator = Tessellator.instance;
         tessellator.startDrawingQuads();
@@ -92,7 +93,8 @@ public class LightLevelOverlayRendererVanilla implements LightLevelOverlayRender
 
         tessellator.draw();
         tessellator.setTranslation(0.0D, 0.0D, 0.0D);
-        //GL11.glDisable(GL11.GL_BLEND);
+        // disable blending (if it was disabled previously)
+        if (!glBlendState) GL11.glDisable(GL11.GL_BLEND);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         GL11.glPolygonOffset(0.0F, 0.0F);
         GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);

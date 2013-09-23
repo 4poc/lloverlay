@@ -180,7 +180,7 @@ public class LightLevelOverlayRendererVBO implements LightLevelOverlayRenderer {
         // render overlays
         renderVBO();
 
-        GL11.glDisable(GL11.GL_BLEND);
+        //GL11.glDisable(GL11.GL_BLEND);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         GL11.glPolygonOffset(0.0F, 0.0F);
         GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);

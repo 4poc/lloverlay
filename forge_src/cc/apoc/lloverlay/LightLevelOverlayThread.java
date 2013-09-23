@@ -115,7 +115,7 @@ public class LightLevelOverlayThread extends Thread {
                         for (int z = 0; z < 16; z++) {
                             Block previous = null;
                             // begin iteration above the players head (small optimization)
-                            for (int y = playerY+3; y > playerY+3-distance && y > 0; y--) {
+                            for (int y = playerY+3; y > playerY+3-distance && y >= 0; y--) {
                                 
                                 // local chunk coords => world coords
                                 int wx = chunkX * 16 + x;
@@ -134,7 +134,6 @@ public class LightLevelOverlayThread extends Thread {
                                             
                                             boolean solidTop = mc.theWorld.doesBlockHaveSolidTopSurface(wx, y, wz);
                                             if (!solidTop) {
-                                                //System.out.println("asdf");
                                                 block.setBlockBoundsBasedOnState(renderBlocks.blockAccess, wx, y, wz);
                                                 blockHeight = block.getBlockBoundsMaxY();
                                             }

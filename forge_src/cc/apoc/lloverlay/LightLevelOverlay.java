@@ -103,24 +103,19 @@ class LightLevelOverlay {
                 thread.interrupt();
                 reload();
             }
-            if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-                mc.displayGuiScreen(new LightLevelOverlayScreen(config));
-            }
-            else {
-                active = (active) ? false : true; // toggle!
-                thread.setActive(active);
-                debugMessage("toggle active: %s", active);
-                renderer.clear();
-                if (!thread.isAlive()) {
-                    debugMessage("starting thread");
-                    try {
-                        thread.start();
-                    }
-                    catch (Exception e) {
-                        debugMessage("unable to start lloverlay thread!");
-                        e.printStackTrace();
-                        thread = new LightLevelOverlayThread(config, renderer);
-                    }
+            active = (active) ? false : true; // toggle!
+            thread.setActive(active);
+            debugMessage("toggle active: %s", active);
+            renderer.clear();
+            if (!thread.isAlive()) {
+                debugMessage("starting thread");
+                try {
+                    thread.start();
+                }
+                catch (Exception e) {
+                    debugMessage("unable to start lloverlay thread!");
+                    e.printStackTrace();
+                    thread = new LightLevelOverlayThread(config, renderer);
                 }
             }
         }

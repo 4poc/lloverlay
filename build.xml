@@ -46,10 +46,10 @@
     <property name="forge_mcp_src.dir" value="${forge_mcp.dir}/src" />
 
     <!-- setup versions -->
-    <property name="lloverlay.version" value="0.20" />
+    <property name="lloverlay.version" value="0.21" />
     <property name="mc.version" value="1.6.4" />
     <property name="mcp.version" value="811" />
-    <property name="forge.version" value="9.11.0.880" />
+    <property name="forge.version" value="9.11.0.884" />
 
     <property name="mcp.filename" value="mcp${mcp.version}.zip" />
     <property name="forge.filename" value="minecraftforge-src-${mc.version}-${forge.version}.zip" />
@@ -88,7 +88,10 @@
     <!-- download mcp and forge -->
     <target name="download-files" depends="download-forge,download-mcp" />
     <target name="download-mcp" unless="mcp-exists">
-        <get src="http://mcp.ocean-labs.de/files/${mcp.filename}" dest="${download.dir}" usetimestamp="True" />
+        <!-- they no longer provide direct downloads :(  
+            <get src="http://mcp.ocean-labs.de/files/${mcp.filename}" dest="${download.dir}" usetimestamp="True" />
+        -->
+        <echo>Download mcp manually! http://mcp.ocean-labs.de/</echo>
     </target>
     <target name="download-forge" unless="forge-exists">
         <get src="http://files.minecraftforge.net/${forge.filename}" dest="${download.dir}" usetimestamp="True" />
@@ -132,7 +135,7 @@
 
     <!-- copies the mcp decompiled source to vanilla_diff/{src,src_mod}
          clumsy hack to automate the process of creating the patch -->
-    <target name="diff-setup" if="diff-vanilla-out-of-date" depends="setup-mcp">
+    <target name="diff-setup" depends="setup-mcp">
         <delete dir="${vanilla_diff.dir}/src" failonerror="false" />
         <delete dir="${vanilla_diff.dir}/src_mod" failonerror="false" />
 
@@ -145,7 +148,7 @@
         </copy>
     </target>
 
-    <target name="diff-create" if="diff-vanilla-out-of-date">
+    <target name="diff-create">
         <exec dir="${vanilla_diff.dir}" executable="diff" osfamily="unix" logError="false"  failonerror="false" output="${vanilla_diff.filename}">
             <arg line="-rupN src/ src_mod/"/>
         </exec>

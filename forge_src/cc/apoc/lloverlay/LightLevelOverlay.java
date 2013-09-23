@@ -84,11 +84,11 @@ class LightLevelOverlay {
             config.getRenderer() == LightLevelOverlayConfig.Renderer.AUTO) &&
            GLContext.getCapabilities().OpenGL15) {
            renderer = new LightLevelOverlayRendererVBO(config);
-           debugMessage("using fast VBO renderer");
+           System.out.println("lloverlay is using renderer 'fast' (VBO)");
         }
         else {
             renderer = new LightLevelOverlayRendererVanilla(config);
-            debugMessage("using slow vanilla legacy renderer");
+            System.out.println("lloverlay is using renderer 'vanilla' (legacy rendering)");
         }
         thread = new LightLevelOverlayThread(config, renderer);
     }

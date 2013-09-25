@@ -57,9 +57,11 @@ public class LightLevelOverlayConfig {
             file.getParentFile().mkdir();
         }
         if (!file.exists()) {
-            save(); // saves default config
+            reset();
         }
-        load();
+        else {
+            load();
+        }
     }
 
     public void save() {
@@ -108,38 +110,30 @@ public class LightLevelOverlayConfig {
     public void load() {
         Properties properties = new Properties();
         try {
+            file.createNewFile();
             properties.load(new FileInputStream(file));
             drawChunks = Integer.parseInt(properties.getProperty("drawChunks", "4"));
             hotkey = Integer.parseInt(properties.getProperty("hotkey", "67"));
             generateInterval = Integer.parseInt(properties.getProperty("generateInterval", "250"));
             textureRow = Integer.parseInt(properties.getProperty("textureRow", "0"));
             debug = Boolean.parseBoolean(properties.getProperty("debug", "false"));
-            // for backwards-compat.:
-            if (properties.containsKey("showLightlevelUpto")) {
-                showLightlevelUpto = Integer.parseInt(properties.getProperty("showLightlevelUpto", "15"));
-            }
-            else {
-                save();
-            }
-            if (properties.containsKey("useSkyLightlevel")) {
-                useSkyLightlevel = Boolean.parseBoolean(properties.getProperty("useSkyLightlevel", "false"));
-            }
-            else {
-                save();
-            }
-            if (properties.containsKey("renderer")) {
-                String r = properties.getProperty("renderer");
-                renderer = parseRendererString(r);
-            }
-            else {
-                save();
-            }
+            showLightlevelUpto = Integer.parseInt(properties.getProperty("showLightlevelUpto", "15"));
+            useSkyLightlevel = Boolean.parseBoolean(properties.getProperty("useSkyLightlevel", "false"));
+            renderer = parseRendererString(properties.getProperty("renderer", "auto"));
             debugMessage("config loaded: %s", file);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }   
+    }
+
+    public void reset() {
+        if (file.exists()) {
+            file.delete();
+        }
+        load();
+        save();
     }
     
     protected boolean isForge() {
@@ -226,6 +220,7 @@ public class LightLevelOverlayConfig {
     public void setRenderer(Renderer renderer) {
         this.renderer = renderer;
     }
+
 
 }
 

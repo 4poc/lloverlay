@@ -90,32 +90,35 @@ class LightLevelOverlay {
             renderer = new LightLevelOverlayRendererVanilla(config);
             System.out.println("lloverlay is using renderer 'vanilla' (legacy rendering)");
         }
+        if (thread != null) {
+            thread.setActive(false);
+            thread.interrupt();
+        }
         thread = new LightLevelOverlayThread(config, renderer);
     }
 
     private void hotkeyPoll() {
         if (Keyboard.isKeyDown(config.getHotkey()) && frameTime - lastHotkeyKeydown > 250) {
             lastHotkeyKeydown = frameTime;
-            if (Keyboard.isKeyDown(Keyboard.KEY_R)) {
-                config.load();
-                debugMessage("reload config");
-                thread.setActive(false);
-                thread.interrupt();
-                reload();
+            // if the player presses the hotkey + shift, open a settings GUI
+            if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+                mc.displayGuiScreen(new LightLevelOverlaySettingsScreen(config));
             }
-            active = (active) ? false : true; // toggle!
-            thread.setActive(active);
-            debugMessage("toggle active: %s", active);
-            renderer.clear();
-            if (!thread.isAlive()) {
-                debugMessage("starting thread");
-                try {
-                    thread.start();
-                }
-                catch (Exception e) {
-                    debugMessage("unable to start lloverlay thread!");
-                    e.printStackTrace();
-                    thread = new LightLevelOverlayThread(config, renderer);
+            else {
+                active = (active) ? false : true; // toggle!
+                thread.setActive(active);
+                debugMessage("toggle active: %s", active);
+                renderer.clear();
+                if (!thread.isAlive()) {
+                    debugMessage("starting thread");
+                    try {
+                        thread.start();
+                    }
+                    catch (Exception e) {
+                        debugMessage("unable to start lloverlay thread!");
+                        e.printStackTrace();
+                        thread = new LightLevelOverlayThread(config, renderer);
+                    }
                 }
             }
         }

@@ -46,10 +46,10 @@
     <property name="forge_mcp_src.dir" value="${forge_mcp.dir}/src" />
 
     <!-- setup versions -->
-    <property name="lloverlay.version" value="0.22" />
+    <property name="lloverlay.version" value="0.23" />
     <property name="mc.version" value="1.6.4" />
     <property name="mcp.version" value="811" />
-    <property name="forge.version" value="9.11.0.884" />
+    <property name="forge.version" value="9.11.0.886" />
 
     <property name="mcp.filename" value="mcp${mcp.version}.zip" />
     <property name="forge.filename" value="minecraftforge-src-${mc.version}-${forge.version}.zip" />
@@ -152,6 +152,13 @@
         <exec dir="${vanilla_diff.dir}" executable="diff" osfamily="unix" logError="false"  failonerror="false" output="${vanilla_diff.filename}">
             <arg line="-rupN src/ src_mod/"/>
         </exec>
+    </target>
+
+    <target name="remove-packages">
+        <delete includeemptydirs="true">
+            <fileset dir="${jar.dir}" includes="**/*" />
+        </delete>
+        <mkdir dir="${jar.dir}" />
     </target>
 
     <!-- ****** vanilla ****** -->
@@ -257,10 +264,6 @@
         </copy>
         <move file="${vanilla_classes.dir}/assets/lloverlay" tofile="${vanilla_classes.dir}/assets/minecraft"/>
         
-        <delete includeemptydirs="true">
-            <fileset dir="${jar.dir}" includes="**/*" />
-        </delete>
-        <mkdir dir="${jar.dir}" />
 
         <jar destfile="${jar.dir}/lloverlay-v${lloverlay.version}${build_number}-${mc.version}-mcp${mcp.version}-vanilla.zip" basedir="${vanilla_classes.dir}" />
     </target>
@@ -341,5 +344,5 @@
         <jar destfile="${jar.dir}/lloverlay-v${lloverlay.version}${build_number}-${mc.version}-${forge.version}-forge.zip" basedir="${forge_classes.dir}" />
     </target>
     
-    <target name="main" depends="vanilla-package,forge-package" />
+    <target name="main" depends="remove-packages,vanilla-package,forge-package" />
 </project>

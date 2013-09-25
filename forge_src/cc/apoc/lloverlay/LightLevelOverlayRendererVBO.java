@@ -39,8 +39,8 @@ public class LightLevelOverlayRendererVBO implements LightLevelOverlayRenderer {
         textureLocation = new ResourceLocation(domain + ":textures/lightlevel.png");
         
         // init buffers used for the vbo
-        int maxVertices = ((int) Math.pow(config.getDrawDistance() * 2, 3) + 1);
-        int maxTexCoords = ((int) Math.pow(config.getDrawDistance() * 2, 3) + 1);
+        int maxVertices = ((int) Math.pow(config.getDrawChunks()*16 * 2, 3) + 1);
+        int maxTexCoords = ((int) Math.pow(config.getDrawChunks()*16 * 2, 3) + 1);
         int maxFloats = maxVertices * 3 + maxTexCoords * 2;
         
         vertexBuffer = createFloatBuffer(maxFloats);

@@ -101,8 +101,8 @@ public class LightLevelOverlayThread extends Thread {
         
         debugMessage("start generation by chunk");
 
-        int distance = config.getDrawDistance();
-        int chunkDistance = (int) Math.ceil(distance / 16.0);
+        int distance = config.getDrawChunks()*16;
+        int chunkDistance = config.getDrawChunks();
         
         // collect block & lighting information per chunks around the player
         IChunkProvider provider = mc.theWorld.getChunkProvider();

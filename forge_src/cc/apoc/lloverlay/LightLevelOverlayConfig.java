@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import net.minecraft.client.settings.GameSettings;
+
 import org.lwjgl.input.Keyboard;
 
 public class LightLevelOverlayConfig {
@@ -20,25 +22,25 @@ public class LightLevelOverlayConfig {
      * 
      * Debug messages are printed to stderr.
      */
-    private boolean debug = false;
+    private boolean debug;
     
     /**
      * Hotkey that toggles the overlay.
      */
-    private int hotkey = Keyboard.KEY_F9;
+    private int hotkey;
      
-    private int textureRow = 0;
+    private int textureRow;
     // only draw overlay for lightlevel <n> and lower.
-    private int showLightlevelUpto = 15;
+    private int showLightlevelUpto;
     // interval in ms in which the overlay cache should be generated,
     // for instance if you place a torch its at least 250 ms till the
     // overlays are updated
-    private int generateInterval = 250;
-    // overlay drawing area around the player in blocks in each direction
-    private int drawDistance = 25; // actual area: drawDistance^3*2
+    private int generateInterval;
+    // overlay drawing area around the player
+    private int drawChunks; // 4 chunks around the player
     
     // show the lightlevel affected by the sun
-    private boolean useSkyLightlevel = false;
+    private boolean useSkyLightlevel;
     
     // what renderer to use (slow 'vanilla', or 'fast') auto=autodetect
     public enum Renderer {
@@ -62,7 +64,7 @@ public class LightLevelOverlayConfig {
 
     public void save() {
         Properties properties = new Properties();
-        properties.setProperty("drawDistance", Integer.toString(drawDistance));
+        properties.setProperty("drawChunks", Integer.toString(drawChunks));
         properties.setProperty("hotkey", Integer.toString(hotkey));
         properties.setProperty("generateInterval", Integer.toString(generateInterval));
         properties.setProperty("textureRow", Integer.toString(textureRow));
@@ -80,7 +82,7 @@ public class LightLevelOverlayConfig {
         }
     }
 
-    private String getRendererString() {
+    public String getRendererString() {
         switch (renderer) {
         case FAST:
             return "fast";
@@ -91,37 +93,43 @@ public class LightLevelOverlayConfig {
             return "auto";
         }
     }
+    
+    public Renderer parseRendererString(String r) {
+        Renderer renderer;
+        if (r.equals("vanilla"))
+            renderer = Renderer.VANILLA;
+        else if (r.equals("fast"))
+            renderer = Renderer.FAST;
+        else
+            renderer = Renderer.AUTO;
+        return renderer;
+    }
 
     public void load() {
         Properties properties = new Properties();
         try {
             properties.load(new FileInputStream(file));
-            drawDistance = Integer.parseInt(properties.getProperty("drawDistance"));
-            hotkey = Integer.parseInt(properties.getProperty("hotkey"));
-            generateInterval = Integer.parseInt(properties.getProperty("generateInterval"));
-            textureRow = Integer.parseInt(properties.getProperty("textureRow"));
-            debug = Boolean.parseBoolean(properties.getProperty("debug"));
+            drawChunks = Integer.parseInt(properties.getProperty("drawChunks", "4"));
+            hotkey = Integer.parseInt(properties.getProperty("hotkey", "67"));
+            generateInterval = Integer.parseInt(properties.getProperty("generateInterval", "250"));
+            textureRow = Integer.parseInt(properties.getProperty("textureRow", "0"));
+            debug = Boolean.parseBoolean(properties.getProperty("debug", "false"));
             // for backwards-compat.:
             if (properties.containsKey("showLightlevelUpto")) {
-                showLightlevelUpto = Integer.parseInt(properties.getProperty("showLightlevelUpto"));
+                showLightlevelUpto = Integer.parseInt(properties.getProperty("showLightlevelUpto", "15"));
             }
             else {
                 save();
             }
             if (properties.containsKey("useSkyLightlevel")) {
-                useSkyLightlevel = Boolean.parseBoolean(properties.getProperty("useSkyLightlevel"));
+                useSkyLightlevel = Boolean.parseBoolean(properties.getProperty("useSkyLightlevel", "false"));
             }
             else {
                 save();
             }
             if (properties.containsKey("renderer")) {
                 String r = properties.getProperty("renderer");
-                if (r.equals("vanilla"))
-                    renderer = Renderer.VANILLA;
-                else if (r.equals("fast"))
-                    renderer = Renderer.FAST;
-                else
-                    renderer = Renderer.AUTO;
+                renderer = parseRendererString(r);
             }
             else {
                 save();
@@ -167,6 +175,10 @@ public class LightLevelOverlayConfig {
         this.hotkey = hotkey;
     }
 
+    public String getHotkeyString() {
+        return GameSettings.getKeyDisplayString(getHotkey());
+    }
+
     public int getTextureRow() {
         return textureRow;
     }
@@ -191,12 +203,12 @@ public class LightLevelOverlayConfig {
         this.generateInterval = generateInterval;
     }
 
-    public int getDrawDistance() {
-        return drawDistance;
+    public int getDrawChunks() {
+        return drawChunks;
     }
 
-    public void setDrawDistance(int drawDistance) {
-        this.drawDistance = drawDistance;
+    public void setDrawChunks(int drawChunks) {
+        this.drawChunks = drawChunks;
     }
 
     public boolean isUseSkyLightlevel() {
@@ -214,5 +226,6 @@ public class LightLevelOverlayConfig {
     public void setRenderer(Renderer renderer) {
         this.renderer = renderer;
     }
+
 }
 

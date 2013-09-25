@@ -9,8 +9,6 @@ import java.util.Properties;
 
 import net.minecraft.client.settings.GameSettings;
 
-import org.lwjgl.input.Keyboard;
-
 public class LightLevelOverlayConfig {
 
     private File file;

@@ -2,23 +2,14 @@ package cc.apoc.lloverlay;
 
 import java.util.Arrays;
 
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiSlider;
 import net.minecraft.client.gui.GuiSmallButton;
-import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.client.settings.EnumOptions;
 import net.minecraft.client.settings.GameSettings;
-import net.minecraft.client.settings.KeyBinding;
 
-@SideOnly(Side.CLIENT)
 public class LightLevelOverlaySettingsScreen extends GuiScreen {
 
     protected String screenTitle = "Light Level Overlay Settings";

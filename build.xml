@@ -260,6 +260,7 @@
         <copy todir="${vanilla_classes.dir}">
             <fileset dir="${resources.dir}">
                 <exclude name="mcmod.info" />
+                <exclude name="pack.mcmeta" />
             </fileset>
         </copy>
         <move file="${vanilla_classes.dir}/assets/lloverlay" tofile="${vanilla_classes.dir}/assets/minecraft"/>
